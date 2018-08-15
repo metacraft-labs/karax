@@ -13,6 +13,8 @@ proc getName(n: NimNode): string =
   case n.kind
   of nnkIdent:
     result = $n.ident
+  of nnkSym, nnkOpenSymChoice:
+    result = n.repr
   of nnkAccQuoted:
     result = ""
     for i in 0..<n.len:
@@ -20,7 +22,6 @@ proc getName(n: NimNode): string =
   of nnkStrLit..nnkTripleStrLit:
     result = n.strVal
   else:
-    #echo repr n
     expectKind(n, nnkIdent)
 
 proc newDotAsgn(tmp: NimNode, key: string, x: NimNode): NimNode =
