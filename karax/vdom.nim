@@ -311,6 +311,8 @@ proc toString*(n: VNode; result: var string; indent: int) =
   result.add ">\L"
   if n.kind == VNodeKind.text:
     result.add n.text
+  elif n.kind == VNodeKind.verbatim:
+    result.add n.text
   else:
     if n.text.len > 0:
       result.add " value = "
@@ -381,6 +383,8 @@ proc add*(result: var string, n: VNode, indent = 0, indWidth = 2) =
 
   if n.kind == VNodeKind.text:
     result.addEscaped(n.text)
+  elif n.kind == VNodeKind.verbatim:
+    result.add(n.text)
   else:
     let kind = $n.kind
     result.add('<')
@@ -405,10 +409,10 @@ proc add*(result: var string, n: VNode, indent = 0, indWidth = 2) =
       if n.len > 1:
         var noWhitespace = false
         for i in 0..<n.len:
-          if n[i].kind == VNodeKind.text:
+          if n[i].kind in {VNodeKind.text, VNodeKind.verbatim}:
             noWhitespace = true
             break
-
+          
         if noWhitespace:
           # for mixed leaves, we cannot output whitespace for readability,
           # because this would be wrong. For example: ``a<b>b</b>`` is
