@@ -768,11 +768,14 @@ proc dodraw(kxi: KaraxInstance) =
   if not kxi.postRenderCallback.isNil:
     kxi.postRenderCallback(rdata)
   # echo "after:", afterRedraws.len
-  for afterRedraw in afterRedraws:
+  while afterRedraws.len > 0:
+  # for afterRedraw in afterRedraws:
+    let afterRedraw = afterRedraws[0]
     try:
       # echo "after"
       afterRedraw()
-    except:
+    finally:
+      afterRedraws = afterRedraws[1 .. ^1]
       continue
   afterRedraws = @[]
 
