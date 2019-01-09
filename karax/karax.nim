@@ -66,6 +66,7 @@ type
     components: seq[ComponentPair]
     supressRedraws*: bool
     byId: JDict[cstring, VNode]
+    afterRedraws*: seq[proc: void]
     when defined(stats):
       recursion: int
     orphans: JDict[cstring, bool]
@@ -423,6 +424,8 @@ proc equals(a, b: VNode): bool =
 
 proc findComponents(newNode: VNode, kxi: KaraxInstance) =
   for i in 0 ..< newNode.len:
+    if newNode[i].isNil:
+      continue
     if newNode[i].lazy and not newNode[i].id.isNil:
       var current = document.getElementById(newNode[i].id)
       if not current.isNil:
@@ -722,6 +725,7 @@ var onhashChange {.importc: "window.onhashchange".}: proc()
 var hashPart {.importc: "window.location.hash".}: cstring
 
 proc dodraw(kxi: KaraxInstance) =
+  echo "kxi"
   if kxi.renderer.isNil: return
   let rdata = RouterData(hashPart: hashPart)
   let newtree = kxi.renderer(rdata)
@@ -768,16 +772,17 @@ proc dodraw(kxi: KaraxInstance) =
   if not kxi.postRenderCallback.isNil:
     kxi.postRenderCallback(rdata)
   # echo "after:", afterRedraws.len
-  while afterRedraws.len > 0:
+  echo kxi.afterRedraws.len
+  while kxi.afterRedraws.len > 0:
   # for afterRedraw in afterRedraws:
-    let afterRedraw = afterRedraws[0]
+    let afterRedraw = kxi.afterRedraws[0]
     try:
-      # echo "after"
+      echo "after"
       afterRedraw()
     finally:
-      afterRedraws = afterRedraws[1 .. ^1]
+      kxi.afterRedraws = kxi.afterRedraws[1 .. ^1]
       continue
-  afterRedraws = @[]
+  # afterRedraws = @[]
 
   # now that it's part of the DOM, give it the focus:
   if kxi.toFocus != nil:
@@ -797,9 +802,9 @@ when false:
   proc cancelFrame(id: int) {.importc: "window.cancelAnimationFrame".}
 
 proc redraw*(kxi: KaraxInstance = kxi) =
-  if ignoreNextRedraw and not forceNextRedraw and afterRedraws.len == 0:
+  if ignoreNextRedraw and not forceNextRedraw and kxi.afterRedraws.len == 0:
     ignoreNextRedraw = false
-    # echo "no redraw: ", afterRedraws.len
+    echo "no redraw: ", kxi.afterRedraws.len
     return
   forceNextRedraw = false
   # inRequest = true
@@ -810,6 +815,9 @@ proc redraw*(kxi: KaraxInstance = kxi) =
       clearTimeout(drawTimeout)
     drawTimeout = setTimeout(dodraw, 30)
   elif true:
+    if kxi.isNil:
+      echo "kxi nil"
+      return
     if kxi.renderId == 0:
       kxi.renderId = reqFrame(proc () = kxi.dodraw)
   else:
@@ -838,7 +846,8 @@ proc setRenderer*(renderer: proc (data: RouterData): VNode,
                          components: @[],
                          supressRedraws: false,
                          byId: newJDict[cstring, VNode](),
-                         orphans: newJDict[cstring, bool]())
+                         orphans: newJDict[cstring, bool](),
+                         afterRedraws: @[])
   kxi = result
   window.onload = init
   onhashChange = proc() = redraw()
@@ -862,7 +871,8 @@ proc setInitializer*(renderer: proc (data: RouterData): VNode, root: cstring = "
                         components: @[],
                         supressRedraws: true,
                         byId: newJDict[cstring, VNode](),
-                        orphans: newJDict[cstring, bool]())
+                        orphans: newJDict[cstring, bool](),
+                        afterRedraws: @[])
   kxi = result
   window.onload = init
 
