@@ -11,7 +11,7 @@ var inRequest = false
 var requestNumber = 0
 var ignoreNextRedraw* = false
 var forceNextRedraw* = false
-var afterRedraws*: seq[proc: void] = @[]
+# var afterRedraws*: seq[proc: void] = @[]
 
 var diffIndex* = 0
 var karaxSilent* = false
@@ -726,6 +726,7 @@ var hashPart {.importc: "window.location.hash".}: cstring
 
 proc dodraw(kxi: KaraxInstance) =
   echo "kxi"
+  kout kxi.renderer
   if kxi.renderer.isNil: return
   let rdata = RouterData(hashPart: hashPart)
   let newtree = kxi.renderer(rdata)
@@ -743,6 +744,8 @@ proc dodraw(kxi: KaraxInstance) =
     timeIt("diff" & $requestNumber):
       let olddom = document.getElementById(kxi.rootId)
       diffIndex = 0
+      # kout olddom
+      # kout newtree
       diff(nil, olddom, newtree, kxi.currentTree, kxi)
 
       # echo res, diffIndex
@@ -772,12 +775,12 @@ proc dodraw(kxi: KaraxInstance) =
   if not kxi.postRenderCallback.isNil:
     kxi.postRenderCallback(rdata)
   # echo "after:", afterRedraws.len
-  echo kxi.afterRedraws.len
+  # echo kxi.afterRedraws.len
   while kxi.afterRedraws.len > 0:
   # for afterRedraw in afterRedraws:
     let afterRedraw = kxi.afterRedraws[0]
     try:
-      echo "after"
+      # echo "after"
       afterRedraw()
     finally:
       kxi.afterRedraws = kxi.afterRedraws[1 .. ^1]
