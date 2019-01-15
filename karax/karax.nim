@@ -453,7 +453,7 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
   if not equals(newNode, oldNode):
     let n = vnodeToDom(newNode, kxi)
     if parent == nil:
-      replaceById("ROOT", n)
+      replaceById(kxi.rootID, n)
     else:
       parent.replaceChild(n, current)
   elif newNode.kind != VNodeKind.text:
@@ -725,8 +725,6 @@ var onhashChange {.importc: "window.onhashchange".}: proc()
 var hashPart {.importc: "window.location.hash".}: cstring
 
 proc dodraw(kxi: KaraxInstance) =
-  echo "kxi"
-  kout kxi.renderer
   if kxi.renderer.isNil: return
   let rdata = RouterData(hashPart: hashPart)
   let newtree = kxi.renderer(rdata)
@@ -744,9 +742,12 @@ proc dodraw(kxi: KaraxInstance) =
     timeIt("diff" & $requestNumber):
       let olddom = document.getElementById(kxi.rootId)
       diffIndex = 0
-      # kout olddom
-      # kout newtree
-      diff(nil, olddom, newtree, kxi.currentTree, kxi)
+      if olddom.isNil:
+        echo "NIL BECOMES", kxi.rootId
+        discard
+      else:
+        echo "OK", kxi.rootId
+        diff(nil, olddom, newtree, kxi.currentTree, kxi)
 
       # echo res, diffIndex
       # if res == freshRedraw:
