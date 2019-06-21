@@ -14,7 +14,7 @@ var forceNextRedraw* = false
 # var afterRedraws*: seq[proc: void] = @[]
 
 var diffIndex* = 0
-var karaxSilent* = false
+var karaxSilent* = true #false
 
 proc kout*[T](x: T) {.importc: "console.log", varargs, deprecated.}
   ## the preferred way of debugging karax applications. Now deprecated,
@@ -463,7 +463,11 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
     assert oldNode.kind == newNode.kind
     when true: #defined(simpleDiff):
       for i in 0..min(newLength, oldLength)-1:
-        diff(current, current[i], newNode[i], oldNode[i], kxi)
+        echo i
+        try:
+          diff(current, current[i], newNode[i], oldNode[i], kxi)
+        except:
+          discard
       if newLength > oldLength:
         for i in oldLength..newLength-1:
           # kout cstring"append", newNode[i]
