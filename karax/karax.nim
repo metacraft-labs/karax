@@ -463,7 +463,7 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
     assert oldNode.kind == newNode.kind
     when true: #defined(simpleDiff):
       for i in 0..min(newLength, oldLength)-1:
-        echo i
+        # echo i
         try:
           diff(current, current[i], newNode[i], oldNode[i], kxi)
         except:
