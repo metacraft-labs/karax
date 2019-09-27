@@ -733,6 +733,7 @@ proc dodraw(kxi: KaraxInstance) =
   let rdata = RouterData(hashPart: hashPart)
   let newtree = kxi.renderer(rdata)
   inc kxi.runCount
+  # echo kxi.rootId
   newtree.id = kxi.rootId
   kxi.toFocus = nil
   if kxi.currentTree == nil:
@@ -750,7 +751,7 @@ proc dodraw(kxi: KaraxInstance) =
         echo "NIL BECOMES", kxi.rootId
         discard
       else:
-        echo "OK", kxi.rootId
+        # echo "OK", kxi.rootId
         diff(nil, olddom, newtree, kxi.currentTree, kxi)
 
       # echo res, diffIndex
