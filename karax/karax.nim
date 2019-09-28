@@ -4,8 +4,8 @@ import kdom, vdom, jstrutils, compact, jdict, vstyles, strformat
 
 export kdom.Event, kdom.Blob
 
-when defined(nimNoNil):
-  {.experimental: "notnil".}
+# when defined(nimNoNil):
+#   {.experimental: "notnil".}
 
 var inRequest = false
 var requestNumber = 0
@@ -51,7 +51,7 @@ type
 
   KaraxInstance* = ref object ## underlying karax instance. Usually you don't have
                               ## know about this.
-    rootId: cstring not nil
+    rootId: cstring #not nil
     renderer: proc (data: RouterData): VNode {.closure.}
     currentTree: VNode
     postRenderCallback: proc (data: RouterData)
