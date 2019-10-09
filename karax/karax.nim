@@ -897,6 +897,18 @@ proc addEventHandler*(n: VNode; k: EventKind; action: EventHandler;
     if not kxi.supressRedraws: redraw(kxi)
   addEventListener(n, k, wrapper)
 
+proc addEventHandler*(n: VNode; k: EventKind; action: proc(e: KeyboardEvent, v: VNode);
+                      kxi: KaraxInstance = kxi) =
+  ## Implements the foundation of Karax's event management.
+  ## Karax DSL transforms ``tag(onEvent = handler)`` to
+  ## ``tempNode.addEventHandler(tagNode, EventKind.onEvent, wrapper)``
+  ## where ``wrapper`` calls the passed ``action`` and then triggers
+  ## a ``redraw``.
+  proc wrapper(ev: Event; n: VNode) =
+    action(cast[KeyboardEvent](ev), n)
+    if not kxi.supressRedraws: redraw(kxi)
+  addEventListener(n, k, wrapper)
+
 proc addEventHandler*(n: VNode; k: EventKind; action: proc();
                       kxi: KaraxInstance = kxi) =
   ## Implements the foundation of Karax's event management.
