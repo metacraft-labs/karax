@@ -781,15 +781,15 @@ proc dodraw(kxi: KaraxInstance) =
   if not kxi.postRenderCallback.isNil:
     kxi.postRenderCallback(rdata)
   # echo "after:", afterRedraws.len
-  # echo kxi.afterRedraws.len
   while kxi.afterRedraws.len > 0:
   # for afterRedraw in afterRedraws:
     let afterRedraw = kxi.afterRedraws[0]
     try:
-      # echo "after"
+      echo "after", kxi.rootId
       afterRedraw()
     finally:
       kxi.afterRedraws = kxi.afterRedraws[1 .. ^1]
+      # echo kxi.afterRedraws.len
       continue
   # afterRedraws = @[]
 
@@ -846,6 +846,7 @@ proc setRenderer*(renderer: proc (data: RouterData): VNode,
   if document.getElementById(root).isNil:
     let msg = "Could not find a <div> with id=" & root &
               ". Karax needs it as its rendering target."
+    echo msg
     raise newException(Exception, $msg)
 
   result = KaraxInstance(rootId: root, renderer: renderer,
@@ -857,9 +858,10 @@ proc setRenderer*(renderer: proc (data: RouterData): VNode,
                          byId: newJDict[cstring, VNode](),
                          orphans: newJDict[cstring, bool](),
                          afterRedraws: @[])
-  kxi = result
-  window.onload = init
-  onhashChange = proc() = redraw()
+  if kxi.isNil:
+    kxi = result
+    window.onload = init
+    onhashChange = proc() = redraw()
 
 proc setRenderer*(renderer: proc (): VNode, root: cstring = "ROOT",
                   clientPostRenderCallback: proc () = nil): KaraxInstance {.discardable.} =
