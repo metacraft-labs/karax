@@ -787,8 +787,11 @@ proc dodraw(kxi: KaraxInstance) =
   # for afterRedraw in afterRedraws:
     let afterRedraw = kxi.afterRedraws[0]
     try:
-      # echo "after", kxi.rootId
+      echo "after", kxi.rootId
       afterRedraw()
+    except Exception as e:
+      kout e
+      echo getCurrentExceptionMsg()
     finally:
       kxi.afterRedraws = kxi.afterRedraws[1 .. ^1]
       # echo kxi.afterRedraws.len
