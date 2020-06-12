@@ -446,6 +446,10 @@ proc replaceComponents(kxi: KaraxInstance) =
 
 var globalNode: VNode
 
+import jsffi except `&`
+
+var javascriptdebugger* {.importcpp: "debugger".}: JsObject
+
 proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
   diffIndex += 1
   if parent.isNil:
@@ -473,11 +477,14 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
       if newLength > oldLength:
         for i in oldLength..newLength-1:
           # kout cstring"append", newNode[i]
-          current.appendChild(vnodeToDom(newNode[i], kxi))
+          if cast[int](current.toJs.childElementCount) < newLength:
+            current.appendChild(vnodeToDom(newNode[i], kxi))
       elif oldLength > newLength:
         for i in countdown(oldLength-1, newLength):
           # kout cstring"remove", current.lastChild
-          current.removeChild(current.lastChild)
+          # discard javascriptdebugger
+          if cast[int](current.toJs.childElementCount) > newLength:
+            current.removeChild(current.lastChild)
     else:
       var commonPrefix = 0
       while commonPrefix < minLength and equalsTree(newNode[commonPrefix], oldNode[commonPrefix]):
