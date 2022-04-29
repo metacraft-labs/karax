@@ -1011,6 +1011,7 @@ else:
   proc appendChild*(n, child: Node) {.importcpp.}
   proc removeChild*(n, child: Node) {.importcpp.}
   proc replaceChild*(n, newNode, oldNode: Node) {.importcpp.}
+  proc replaceWith*(oldNode, newNode: Node) {.importcpp: "#.replaceWith(#)".}
   proc insertBefore*(n, newNode, before: Node) {.importcpp.}
   proc getElementById*(d: Document, id: cstring): Element {.importcpp.}
   proc createElement*(d: Document, identifier: cstring): Element {.importcpp.}

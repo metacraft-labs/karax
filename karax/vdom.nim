@@ -125,6 +125,7 @@ type
     attrs: seq[kstring]
     events*: EventHandlers
     lazy*: bool
+    isThirdParty*: bool
 
     when false:
       hash*: Hash
