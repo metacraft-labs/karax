@@ -495,12 +495,12 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
           # it should work
           # applyStyle(node, newNode.style)
           # node.class = newNode.class
-          try:
-            cast[Node](newThirdPartyNode).replaceWith(node)
-            let afterNode = document.getElementById(node.id)
-            kout afterNode
-          except:
-            discard javascriptdebugger
+          # try:
+          #   cast[Node](newThirdPartyNode).replaceWith(node)
+          #   let afterNode = document.getElementById(node.id)
+          #   kout afterNode
+          # except:
+          #   discard javascriptdebugger
 
       # if third party elements:
       #   replace again using their id
