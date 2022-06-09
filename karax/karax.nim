@@ -379,12 +379,12 @@ proc applyPatch(kxi: KaraxInstance) =
     of pkReplace:
       let nn = vnodeToDom(p.n, kxi)
       if p.parent == nil:
-        echo "replace by id in applyPatch ", kxi.rootId
+        # echo "replace by id in applyPatch ", kxi.rootId
         replaceById(kxi.rootId, nn)
       else:
-        echo "replace in applyPatch "
-        kout nn
-        kout p.current
+        # echo "replace in applyPatch "
+        # kout nn
+        # kout p.current
         p.parent.replaceChild(nn, p.current)
     of pkRemove:
       p.parent.removeChild(p.current)
@@ -472,25 +472,25 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
   if not equals(newNode, oldNode):
     let n = vnodeToDom(newNode, kxi)
     if parent == nil:
-      echo "replace by id ", kxi.rootId
+      # echo "replace by id ", kxi.rootId
       replaceById(kxi.rootId, n)
     else:
       if oldNode.isThirdParty and newNode.isThirdParty:
-        echo "apply styles and class"
+        # echo "apply styles and class"
         # replace only class?
         applyStyle(current, newNode.style)
         current.class = newNode.class
       else:
         let nodes = oldNode.findThirdPartyNodes(parent)
-        kout nodes
-        echo "replaceChild "
-        kout n
-        kout current
+        # kout nodes
+        # echo "replaceChild "
+        # kout n
+        # kout current
         parent.replaceChild(n, current)
         for node in nodes:
-          kout node
+          # kout node
           let newThirdPartyNode = document.getElementById(node.id)
-          kout newThirdPartyNode
+          # kout newThirdPartyNode
           # weird monaco behavior if i do it, but it seems 
           # it should work
           # applyStyle(node, newNode.style)
