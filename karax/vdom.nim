@@ -126,6 +126,7 @@ type
     events*: EventHandlers
     lazy*: bool
     isThirdParty*: bool
+    alwaysChange*: bool
 
     when false:
       hash*: Hash
@@ -271,7 +272,7 @@ proc tree*(kind: VNodeKind; attrs: openarray[(kstring, kstring)];
 proc kout[T](x: T) {.importc: "console.log", varargs, deprecated.}
 when defined(js):
   proc text*(s: string): VNode = VNode(kind: VNodeKind.text, text: kstring(s), index: -1)
-proc text*(s: kstring): VNode = 
+proc text*(s: kstring): VNode =
   VNode(kind: VNodeKind.text, text: s, index: -1)
 
 when defined(js):
@@ -413,7 +414,7 @@ proc add*(result: var string, n: VNode, indent = 0, indWidth = 2) =
           if n[i].kind in {VNodeKind.text, VNodeKind.verbatim}:
             noWhitespace = true
             break
-          
+
         if noWhitespace:
           # for mixed leaves, we cannot output whitespace for readability,
           # because this would be wrong. For example: ``a<b>b</b>`` is

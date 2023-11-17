@@ -23,7 +23,7 @@ proc kout*[T](x: T) {.importc: "console.log", varargs, deprecated.}
 proc consoleTime*(label: cstring) {.importcpp: "console.time(#)".}
 proc consoleEnd*(label: cstring) {.importcpp: "console.timeEnd(#)".}
 
-  
+
 template timeIt(label: untyped, handler: untyped): untyped =
   if not karaxSilent:
     consoleTime(cstring(`label`))
@@ -232,7 +232,7 @@ proc same(n: VNode, e: Node; nesting = 0): bool =
   #   echo "VDOM: ", toTag[n.kind], " DOM: ", e.nodename
   true # TODO, we dont have components here, so is shape check needed
   # hm, we have, but this seemed to work .. maybe it's not important
-  
+
 
 proc replaceById(id: cstring; newTree: Node) =
   let x = document.getElementById(id)
@@ -246,7 +246,7 @@ type
 when defined(profileKarax):
   type
     DifferEnum = enum
-      deKind, deId, deIndex, deText, deClass, 
+      deKind, deId, deIndex, deText, deClass,
       deSimilar
 
   var
@@ -411,21 +411,29 @@ proc applyPatch(kxi: KaraxInstance) =
   kxi.patchLenV = 0
 
 proc equals(a, b: VNode): bool =
-  if a.kind != b.kind: return false
-  if a.id != b.id: return false
-  # if a.key != b.key: return false
-  if a.kind == VNodeKind.text:
-    if a.text != b.text: return false
-  # elif a.kind == VNodeKind.thunk:
-  #   if a.thunk != b.thunk: return false
-  #   if a.len != b.len: return false
-  #   for i in 0..<a.len:
-  #     if not equals(a[i], b[i]): return false
-  if not sameAttrs(a, b): return false
-  if a.class != b.class: return false
-  # XXX test event listeners here?
-  # --> maybe give nodes a hash?
-  return true
+  # try:
+  #   echo fmt"equals? '{a.id}' {b.id}' '{a.class}' '{b.class}'"
+  # except:
+  #   echo "equals?"
+  if a.alwaysChange or b.alwaysChange:
+    # echo "always change"
+    return false
+  else:
+    if a.kind != b.kind: return false
+    if a.id != b.id: return false
+    # if a.key != b.key: return false
+    if a.kind == VNodeKind.text:
+      if a.text != b.text: return false
+    # elif a.kind == VNodeKind.thunk:
+    #   if a.thunk != b.thunk: return false
+    #   if a.len != b.len: return false
+    #   for i in 0..<a.len:
+    #     if not equals(a[i], b[i]): return false
+    if not sameAttrs(a, b): return false
+    if a.class != b.class: return false
+    # XXX test event listeners here?
+    # --> maybe give nodes a hash?
+    return true
 
 
 # proc findComponents(newNode: VNode, kxi: KaraxInstance) =
@@ -476,22 +484,22 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
       replaceById(kxi.rootId, n)
     else:
       if oldNode.isThirdParty and newNode.isThirdParty:
-        # echo "apply styles and class"
+        # echo "both third party: apply styles and class"
         # replace only class?
         applyStyle(current, newNode.style)
         current.class = newNode.class
       else:
-        let nodes = oldNode.findThirdPartyNodes(parent)
+        # let nodes = oldNode.findThirdPartyNodes(parent)
         # kout nodes
-        # echo "replaceChild "
+        # echo "not isThirdParty: replaceChild "
         # kout n
         # kout current
         parent.replaceChild(n, current)
-        for node in nodes:
-          # kout node
-          let newThirdPartyNode = document.getElementById(node.id)
+        # for node in nodes:
+        #   # kout node
+        #   let newThirdPartyNode = document.getElementById(node.id)
           # kout newThirdPartyNode
-          # weird monaco behavior if i do it, but it seems 
+          # weird monaco behavior if i do it, but it seems
           # it should work
           # applyStyle(node, newNode.style)
           # node.class = newNode.class
@@ -517,9 +525,9 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
       # let nodes = parent.findThirdPartyNodes()
       # # for node in nodes:
         # paflorent.replaceChild(node.id, kxi.thirdPart)
-      
 
-          
+
+
   elif newNode.kind != VNodeKind.text:
     let newLength = newNode.len
     var oldLength = oldNode.len
@@ -576,130 +584,6 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
         current.removeChild(current.childNodes[pos])
   # if parent.isNil:
     # replaceComponents(kxi)
-
-proc diff2(newNode, oldNode: VNode; parent, current: Node; kxi: KaraxInstance): EqResult =
-  diffIndex += 1
-  if diffIndex >= 100_000:
-    return freshRedraw
-  when defined(stats):
-    if kxi.recursion > 100:
-      echo "newNode ", newNode.kind, " oldNode ", oldNode.kind, " eq ", eq(newNode, oldNode)
-      if oldNode.kind == VNodeKind.text:
-        echo oldNode.text
-      #return
-      #doAssert false, "overflow!"
-    inc kxi.recursion
-  result = eq(newNode, oldNode)
-  # echo result
-  case result
-  # of componentsIdentical:
-  #   kxi.components.add ComponentPair(oldNode: VComponent(oldNode),
-  #                                     newNode: VComponent(newNode),
-  #                                     parent: parent,
-  #                                     current: current)
-  of identical, similar:
-    newNode.dom = oldNode.dom
-    if result == similar:
-      updateStyles(newNode, oldNode)
-      updateAttributes(newNode, oldNode)
-      if oldNode.kind == VNodeKind.text:
-        oldNode.text = newNode.text
-        oldNode.dom.nodeValue = newNode.text
-
-    if newNode.events.len != 0 or oldNode.events.len != 0:
-      mergeEvents(newNode, oldNode, kxi)
-    when false:
-      if oldNode.kind == VNodeKind.input or oldNode.kind == VNodeKind.textarea:
-        if oldNode.text != newNode.text:
-          oldNode.text = newNode.text
-          oldNode.dom.value = newNode.text
-
-    let newLength = newNode.len
-    let oldLength = oldNode.len
-    if newLength == 0 and oldLength == 0: return result
-    let minLength = min(newLength, oldLength)
-
-    assert oldNode.kind == newNode.kind
-    var commonPrefix = 0
-    let isSpecial = oldNode.kind == VNodeKind.vthunk or
-                    oldNode.kind == VNodeKind.dthunk
-
-    template eqAndUpdate(a: VNode; i: int; b: VNode; j: int; info, action: untyped) =
-      let oldLen = kxi.patchLen
-      let oldLenV = kxi.patchLenV
-      assert i < a.len
-      assert j < b.len
-      let r = if isSpecial:
-                diff2(a[i], b[j], parent, current, kxi)
-              else:
-                diff2(a[i], b[j], current, current.childNodes[j], kxi)
-      case r
-      of identical, similar:
-        a[i] = b[j]
-        action
-      of usenewNode:
-        kxi.addPatchV(b, j, a[i])
-        action
-        # unfortunately, we need to propagate the changes upwards:
-        result = useNewNode
-      of different:
-        # undo what 'diff' would have done:
-        kxi.patchLen = oldLen
-        kxi.patchLenV = oldLenV
-        if result != different: result = r
-        break
-      of freshRedraw:
-        return freshRedraw
-    # compute common prefix:
-    while commonPrefix < minLength:
-      eqAndUpdate(newNode, commonPrefix, oldNode, commonPrefix, cstring"prefix"):
-        inc commonPrefix
-
-    # compute common suffix:
-    var oldPos = oldLength - 1
-    var newPos = newLength - 1
-    while oldPos >= commonPrefix and newPos >= commonPrefix:
-      eqAndUpdate(newNode, newPos, oldNode, oldPos, cstring"suffix"):
-        dec oldPos
-        dec newPos
-
-    let pos = min(oldPos, newPos) + 1
-    # now the different children are in commonPrefix .. pos - 1:
-    for i in commonPrefix..pos-1:
-      let r = diff2(newNode[i], oldNode[i], current, current.childNodes[i], kxi)
-      if r == usenewNode:
-        #oldNode[i] = newNode[i]
-        kxi.addPatchV(oldNode, i, newNode[i])
-      elif r != different:
-        newNode[i] = oldNode[i]
-      #else:
-      #  result = usenewNode
-
-    if oldPos + 1 == oldLength:
-      for i in pos..newPos:
-        kxi.addPatch(pkAppend, current, nil, newNode[i])
-        result = usenewNode
-    else:
-      let before = current.childNodes[oldPos + 1]
-      for i in pos..newPos:
-        kxi.addPatch(pkInsertBefore, current, before, newNode[i])
-        result = usenewNode
-    # XXX call 'attach' here?
-    for i in pos..oldPos:
-      detach(oldNode[i])
-      #doAssert i < current.childNodes.len
-      kxi.addPatch(pkRemove, current, current.childNodes[i], nil)
-      result = usenewNode
-  of different:
-    # if not newNode.noChange:
-    if true:
-      detach(oldNode)
-      kxi.addPatch(pkReplace, parent, current, newNode)
-  of usenewNode: doAssert(false, "eq returned usenewNode")
-  of freshRedraw:
-    return freshRedraw
-  when defined(stats):
-    dec kxi.recursion
 
 # proc applyComponents(kxi: KaraxInstance) =
 #   # the first 'diff' pass detects components in the VDOM. The
@@ -777,19 +661,19 @@ proc runIns*(kxi: KaraxInstance; parent, kid: VNode; position: int) =
   applyPatch(kxi)
   doAssert same(kxi.currentTree, document.getElementById(kxi.rootId))
 
-proc runDiff*(kxi: KaraxInstance; oldNode, newNode: VNode) =
-  let olddom = oldNode.dom
-  doAssert olddom != nil
-  discard diff2(newNode, oldNode, nil, olddom, kxi)
-  # this is a bit nasty: Since we cannot patch the 'parent' of
-  # the current VNode (because we don't store it at all!), we
-  # need to override the fields individually:
-  takeOverFields(newNode, oldNode)
-  # applyComponents(kxi)
-  applyPatch(kxi)
-  if kxi.currentTree == oldNode:
-    kxi.currentTree = newNode
-  doAssert same(kxi.currentTree, document.getElementById(kxi.rootId))
+# proc runDiff*(kxi: KaraxInstance; oldNode, newNode: VNode) =
+#   let olddom = oldNode.dom
+#   doAssert olddom != nil
+#   discard diff2(newNode, oldNode, nil, olddom, kxi)
+#   # this is a bit nasty: Since we cannot patch the 'parent' of
+#   # the current VNode (because we don't store it at all!), we
+#   # need to override the fields individually:
+#   takeOverFields(newNode, oldNode)
+#   # applyComponents(kxi)
+#   applyPatch(kxi)
+#   if kxi.currentTree == oldNode:
+#     kxi.currentTree = newNode
+#   doAssert same(kxi.currentTree, document.getElementById(kxi.rootId))
 
 var onhashChange {.importc: "window.onhashchange".}: proc()
 var hashPart {.importc: "window.location.hash".}: cstring
