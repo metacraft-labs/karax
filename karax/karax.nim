@@ -22,6 +22,8 @@ proc kout*[T](x: T) {.importc: "console.log", varargs, deprecated.}
 
 proc consoleTime*(label: cstring) {.importcpp: "console.time(#)".}
 proc consoleEnd*(label: cstring) {.importcpp: "console.timeEnd(#)".}
+proc createElementNS(document: Document, namespace, tag: cstring): Node {.importjs: "#.createElementNS(@)".}
+proc `classBaseVal=`(n: Node, v: cstring) {.importjs: "#.className.baseVal = #".}
 
 
 template timeIt(label: untyped, handler: untyped): untyped =
@@ -189,7 +191,13 @@ proc vnodeToDom*(n: VNode; kxi: KaraxInstance): Node =
   #   attach n
   #   return result
   else:
-    result = document.createElement(toTag[n.kind])
+    result =
+      if n.kind in svgElements:
+        document.createElementNS(svgNamespace, toTag[n.kind])
+      elif n.kind in mathElements:
+        document.createElementNS(mathNamespace, toTag[n.kind])
+      else:
+        document.createElement(toTag[n.kind])
     attach n
     for k in n:
       appendChild(result, vnodeToDom(k, kxi))
@@ -199,7 +207,10 @@ proc vnodeToDom*(n: VNode; kxi: KaraxInstance): Node =
   if n.id != nil:
     result.id = n.id
   if n.class != nil:
-    result.class = n.class
+    if n.kind in svgElements:
+      result.classBaseVal = n.class.cstring
+    else:
+      result.class = n.class
   #if n.key >= 0:
   #  result.key = n.key
   for k, v in attrs(n):
@@ -487,7 +498,10 @@ proc diff(parent, current: Node, newNode, oldNode: VNode, kxi: KaraxInstance) =
         # echo "both third party: apply styles and class"
         # replace only class?
         applyStyle(current, newNode.style)
-        current.class = newNode.class
+        if oldNode.kind in svgElements:
+          oldNode.dom.classBaseVal = newNode.class
+        else:
+          oldNode.dom.class = newNode.class
       else:
         # let nodes = oldNode.findThirdPartyNodes(parent)
         # kout nodes

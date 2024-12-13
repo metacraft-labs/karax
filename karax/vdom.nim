@@ -28,6 +28,24 @@ type
 
     tdiv = "div",
 
+    # SVG elements, see: https://www.w3.org/TR/SVG2/eltindex.html
+    animate, animateMotion, animateTransform, circle, clipPath, defs, desc,
+    `discard` = "discard", ellipse, feBlend, feColorMatrix, feComponentTransfer,
+    feComposite, feConvolveMatrix, feDiffuseLighting, feDisplacementMap,
+    feDistantLight, feDropShadow, feFlood, feFuncA, feFuncB, feFuncG, feFuncR,
+    feGaussianBlur, feImage, feMerge, feMergeNode, feMorphology, feOffset,
+    fePointLight, feSpecularLighting, feSpotLight, feTile, feTurbulence,
+    filter, foreignObject, g, image, line, linearGradient, marker, mask,
+    metadata, mpath, pth = "path", pattern, polygon, polyline, radialGradient, rect,
+    `set` = "set", stop, svg, switch, symbol, stext = "text", textPath, tspan,
+    unknown, use,
+
+    # MathML elements
+    maction, math, menclose, merror, mfenced, mfrac, mglyph, mi, mlabeledtr,
+    mmultiscripts, mn, mo, mover, mpadded, mphantom, mroot, mrow, ms, mspace,
+    msqrt, mstyle, msub, msubsup, msup, mtable, mtd, mtext, mtr, munder,
+    munderover, semantics,
+
     a, em, strong, small,
     strikethrough = "s", cite, quote,
     dfn, abbr, data, time, code, `var` = "var", samp,
@@ -35,7 +53,7 @@ type
     mark, ruby, rt, rp, bdi, dbo, span, br, wbr,
     ins, del, img, iframe, embed, `object` = "object",
     param, video, audio, source, track, canvas, map,
-    area, svg, math,
+    area,
 
     table, caption, colgroup, col, tbody, thead,
     tfoot, tr, td, th,
@@ -89,24 +107,26 @@ type
                   ## passed (useful for on-the-fly text completions)
 
 
-macro buildLookupTables(): untyped =
-  var a = newTree(nnkBracket)
-  for i in low(VNodeKind)..high(VNodeKind):
-    let x = $i
-    let y = if x[0] == '#': x else: toUpperAscii(x)
-    a.add(newCall("kstring", newLit(y)))
-  var e = newTree(nnkBracket)
-  for i in low(EventKind)..high(EventKind):
-    e.add(newCall("kstring", newLit(substr($i, 2))))
+const
+  svgElements* = {animate .. use}
+  mathElements* = {maction .. semantics}
 
-  template tmpl(a, e) {.dirty.} =
-    const
-      toTag*: array[VNodeKind, kstring] = a
-      toEventName*: array[EventKind, kstring] = e
+var
+  svgNamespace* = "http://www.w3.org/2000/svg"
+  mathNamespace* = "http://www.w3.org/1998/Math/MathML"
 
-  result = getAst tmpl(a, e)
+const
+  toTag* = block:
+    var res: array[VNodeKind, kstring]
+    for kind in VNodeKind:
+      res[kind] = kstring($kind)
+    res
 
-buildLookupTables()
+  toEventName* = block:
+    var res: array[EventKind, kstring]
+    for kind in EventKind:
+      res[kind] = kstring(($kind)[2..^1])
+    res
 
 type
   EventHandler* = proc (ev: Event; target: VNode) {.closure.}
