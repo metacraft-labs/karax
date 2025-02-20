@@ -704,7 +704,6 @@ proc dodraw(kxi: KaraxInstance) =
     timeIt("vnodeToDom" & $requestNumber):
       let asdom = vnodeToDom(newtree, kxi)
     timeIt("replaceById" & $requestNumber):
-      echo "replaceById ", kxi.rootId
       replaceById(kxi.rootId, asdom)
   else:
     timeIt("same" & $requestNumber):
