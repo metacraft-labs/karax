@@ -700,15 +700,21 @@ proc dodraw(kxi: KaraxInstance) =
   # echo kxi.rootId
   newtree.id = kxi.rootId
   kxi.toFocus = nil
+  let localRequestNumber = requestNumber
+  requestNumber += 1
+
+  if not karaxSilent:
+    consoleTime(cstring("dodraw" & $localRequestNumber))
+ 
   if kxi.currentTree == nil:
-    timeIt("vnodeToDom" & $requestNumber):
+    timeIt("vnodeToDom" & $localRequestNumber):
       let asdom = vnodeToDom(newtree, kxi)
-    timeIt("replaceById" & $requestNumber):
+    timeIt("replaceById" & $localRequestNumber):
       replaceById(kxi.rootId, asdom)
   else:
-    timeIt("same" & $requestNumber):
+    timeIt("same" & $localRequestNumber):
       doAssert same(kxi.currentTree, document.getElementById(kxi.rootId))
-    timeIt("diff" & $requestNumber):
+    timeIt("diff" & $localRequestNumber):
       let olddom = document.getElementById(kxi.rootId)
       diffIndex = 0
       if olddom.isNil:
@@ -765,8 +771,7 @@ proc dodraw(kxi: KaraxInstance) =
     kxi.toFocus.focus()
   kxi.renderId = 0
   if not karaxSilent:
-    consoleEnd(cstring("redraw" & $requestNumber))
-  requestNumber += 1
+    consoleEnd(cstring("dodraw" & $localRequestNumber))
   inRequest = false
   when defined(stats):
     kxi.recursion = 0
@@ -784,8 +789,6 @@ proc redraw*(kxi: KaraxInstance = kxi) =
     return
   forceNextRedraw = false
   # inRequest = true
-  if not karaxSilent:
-    consoleTime(cstring("redraw" & $requestNumber))
   when false:
     if drawTimeout != nil:
       clearTimeout(drawTimeout)
