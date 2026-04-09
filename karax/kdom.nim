@@ -173,6 +173,8 @@ type
     offsetWidth*: int
     offsetLeft*: int
     offsetTop*: int
+    scrollHeight*: float
+    scrollWidth*: float
 
   # https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
   ValidityState* = ref ValidityStateObj
